@@ -4,3 +4,11 @@ font-family = Monaspace Krypton Frozen
 font-size = 13
 mouse-hide-while-typing = true
 gtk-titlebar = false
+# macOS: hide the titlebar but keep the native rounded window frame.
+# (window-decoration = false would also square off the corners.)
+macos-titlebar-style = hidden
+# Use in-desktop fullscreen so AeroSpace/JankyBorders keep tracking the window
+# (native fullscreen moves the window to its own space where nothing tracks it)
+macos-non-native-fullscreen = true
+
+theme = "TokyoNight"
