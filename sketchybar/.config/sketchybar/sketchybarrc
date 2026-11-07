@@ -1,0 +1,105 @@
+#!/usr/bin/env bash
+#
+# Minimal Omarchy-style bar — AeroSpace edition (Tokyo Night)
+# Grammar: flat dark surface, mono type, square accent block, active workspace only.
+
+CONFIG_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_DIR="$CONFIG_DIR/plugins"
+
+# Palette from omtheme (Omarchy themes) — falls back to Tokyo Night
+if [ -f "$HOME/.config/omtheme/palette.sh" ]; then
+	source "$HOME/.config/omtheme/palette.sh"
+else
+	BG=0xe61a1b26      # bar surface (slightly translucent)
+	FG=0xffc0caf5      # text / icons
+	GRAY=0xff565f89    # muted
+	ACCENT=0xff7aa2f7  # active states
+	BASE=0xff1a1b26    # ink on accent
+fi
+
+# Reload safety: wipe items from any previous config before re-adding
+sketchybar --remove "/.*/"
+
+bar=(
+  position=top
+  height=28
+  y_offset=0
+  margin=0
+  color="$BG"
+  corner_radius=0
+  blur_radius=0
+  border_width=0
+  shadow=off
+  topmost=off
+  padding_left=8
+  padding_right=8
+  font_smoothing=on
+  display=all
+  notch_width=220
+)
+sketchybar --bar "${bar[@]}"
+
+default=(
+  icon.font="Hack Nerd Font:Bold:13.0"
+  label.font="Hack Nerd Font:12.0"
+  icon.color="$FG"
+  label.color="$FG"
+  padding_left=6
+  padding_right=6
+  background.drawing=off
+  highlight.color="$ACCENT"
+)
+sketchybar --default "${default[@]}"
+
+# Event fed by aerospace.toml exec-on-workspace-change
+sketchybar --add event aerospace_workspace_change
+
+## Left: active workspace + focused app
+
+# Single chip for the currently focused workspace (Omarchy shows where you
+# are, not every desk you could be on)
+sketchybar --add item space left \
+  --set space \
+    icon="$(aerospace list-workspaces --focused 2>/dev/null || echo '?')" \
+    icon.color="$BASE" \
+    label.drawing=off \
+    icon.padding_left=8 \
+    icon.padding_right=8 \
+    background.color="$ACCENT" \
+    background.drawing=on \
+    background.height=28 \
+    background.corner_radius=0 \
+    background.padding_left=0 \
+    background.padding_right=0 \
+    script="$PLUGIN_DIR/aerospace.sh" \
+  --subscribe space aerospace_workspace_change
+
+sketchybar --add item front_app left \
+  --set front_app \
+    icon.drawing=off \
+    label.color="$GRAY" \
+    script="$PLUGIN_DIR/front_app.sh" \
+  --subscribe front_app front_app_switched
+
+## Right: battery, volume, clock
+
+sketchybar --add item battery right \
+  --set battery \
+    update_freq=120 \
+    script="$PLUGIN_DIR/battery.sh" \
+  --subscribe battery system_woke power_source_change
+
+sketchybar --add item volume right \
+  --set volume \
+    script="$PLUGIN_DIR/volume.sh" \
+  --subscribe volume volume_change
+
+sketchybar --add item clock right \
+  --set clock \
+    update_freq=30 \
+    icon.drawing=off \
+    label.color="$FG" \
+    script="$PLUGIN_DIR/clock.sh"
+
+# Run every script once so the bar is populated immediately
+sketchybar --update
